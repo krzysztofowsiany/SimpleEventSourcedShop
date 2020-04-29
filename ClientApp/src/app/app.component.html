@@ -1,0 +1,33 @@
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-8">
+        OrderId: <input type="text" size="50" [(ngModel)]="orderId"/><button (click)="generateId()">GenerateID</button>
+      </div>
+      <div class="col-4">
+      <button (click)="CreateOrder()">CreateOrder</button>
+        <a href="http://localhost:5000/api/order/{{orderId}}" target="_blank">order</a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-8">
+        ClientId: <input type="text" size="50" [(ngModel)]="clientId"/><button (click)="generateClientId()">GenerateID</button>
+      </div>
+      <div class="col-4">
+        <button (click)="ApplyClient()">ApplyClient</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-8">
+        ProductId: <input type="text" size="50" [(ngModel)]="productId"/><button (click)="generateProductId()">GenerateProductId</button>
+      </div>
+      <div class="col-4">
+        <button (click)="AddProduct()">AddProduct</button>
+        <button (click)="RemoveProduct()">RemoveProduct</button>
+      </div>
+    </div>
+
+  </div>
+</body>
