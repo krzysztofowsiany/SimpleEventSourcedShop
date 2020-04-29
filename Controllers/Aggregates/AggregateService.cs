@@ -1,25 +1,28 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using EventStore.ClientAPI;
-using Newtonsoft.Json;
-using SimpleShop.Controllers.Events;
+using SimpleEventSourcedShop.Controllers.Extensions;
 
-namespace SimpleShop.Controllers
+namespace SimpleShop.Controllers.Aggregates
 {
     public class AggregateService
     {
-        UTF8Encoding Encoding = new UTF8Encoding(false);
+
+        private EventStoreBuilder _eventStoreBuilder;
+
+        public AggregateService()
+        {
+            _eventStoreBuilder = new EventStoreBuilder();
+        }
 
         public async Task SaveAggregate<TAggregate>(TAggregate aggregate, long version)
             where TAggregate : AggregateRoot, new()
         {
-            var eventStoreConnection = new EventStoreBuilder().Create();
-            await eventStoreConnection.ConnectAsync();
+            var eventStoreConnection = _eventStoreBuilder.GetConnection();
 
             var events = aggregate.Events
-                .Select(e => new EventData(Guid.NewGuid(), e.GetType().FullName, true, Serialize(e), null))
+                .Select(e => new EventData(Guid.NewGuid(), e.GetType().Name, true, e.Serialize(), null))
                 .ToArray();
 
             aggregate.ClearEvents();
@@ -30,8 +33,7 @@ namespace SimpleShop.Controllers
         public async Task<(long, TAggregate)> GetAggregate<TAggregate>(string id)
             where TAggregate : AggregateRoot, new()
         {
-            var eventStoreConnection = new EventStoreBuilder().Create();
-            await eventStoreConnection.ConnectAsync();
+            var eventStoreConnection = _eventStoreBuilder.GetConnection();
 
             var events = await eventStoreConnection.ReadStreamEventsForwardAsync(id, 0, 1000, true);
 
@@ -48,7 +50,7 @@ namespace SimpleShop.Controllers
 
                 foreach (var @event in events.Events)
                 {
-                    var e = Deserialize(@event);
+                    var e = @event.Deserialize();
                     aggregate.ApplyEvent(e);
                     version++;
                 }
@@ -56,15 +58,5 @@ namespace SimpleShop.Controllers
                 return (version, aggregate);
             });
         }
-
-        private IEvent Deserialize(ResolvedEvent @event)
-        {
-            var data = Encoding.GetString(@event.Event.Data);
-            var type = Type.GetType(@event.Event.EventType);
-
-            return (IEvent) JsonConvert.DeserializeObject(data, type);
-        }
-
-        private byte[] Serialize(IEvent e) => Encoding.GetBytes(JsonConvert.SerializeObject(e));
     }
 }

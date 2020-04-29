@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using SimpleEventSourcedShop.Controllers.Projections;
+using SimpleShop.Controllers.Aggregates;
 using SimpleShop.Controllers.Orders;
 using SimpleShop.Controllers.Requests;
 
@@ -9,10 +11,12 @@ namespace SimpleShop.Controllers
     public class OrderController : Controller
     {
         private AggregateService _aggregateService;
+        private ProjectionService _projectionService;
 
         public OrderController()
         {
             _aggregateService = new AggregateService();
+            _projectionService = new ProjectionService();
         }
 
         [HttpPost("create")]
@@ -20,7 +24,6 @@ namespace SimpleShop.Controllers
         {
             var order = new Order(request.OrderId);
             await _aggregateService.SaveAggregate(order, -1);
-            System.IO.File.AppendAllLines("orders.txt", new[] {order.Id.ToString()});
 
             return Ok(order);
         }
@@ -69,9 +72,17 @@ namespace SimpleShop.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetState(string id)
         {
-            var (version, order) = await _aggregateService.GetAggregate<Order>(id);
-            await _aggregateService.SaveAggregate(order, version);
+            var order = await _projectionService.GetProjection<OrderProjection>(id);
             return Ok(order);
+        }
+
+
+        [HttpGet("getOrders")]
+        public async Task<IActionResult> GetOrders()
+        {
+            var eventStoreConnection = new EventStoreBuilder();
+            var result = await eventStoreConnection.GetProjection("orders");
+            return Ok(result);
         }
     }
 }

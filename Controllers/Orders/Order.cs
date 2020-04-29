@@ -1,4 +1,5 @@
 ﻿using System;
+using SimpleShop.Controllers.Aggregates;
 using SimpleShop.Controllers.Events;
 
 namespace SimpleShop.Controllers.Orders
@@ -15,19 +16,19 @@ namespace SimpleShop.Controllers.Orders
                 case OrderCreated @event:
                     Apply(@event);
                     break;
-                
+
                 case ProductAdded @event:
                     Apply(@event);
                     break;
-                
+
                 case ProductDeleted @event:
                     Apply(@event);
                     break;
-                
+
                 case OrderConfirmed @event:
                     Apply(@event);
                     break;
-                
+
                 case ClientApplied @event:
                     Apply(@event);
                     break;
@@ -36,9 +37,9 @@ namespace SimpleShop.Controllers.Orders
 
         public Order()
         {
-            
+
         }
-        
+
         public Order(Guid id)
         {
             var e = new OrderCreated(id);
@@ -59,14 +60,14 @@ namespace SimpleShop.Controllers.Orders
             Apply(e);
             AddEvent(e);
         }
-        
+
         public void RemoveProduct(Guid productId)
-        {            
+        {
             var e = new ProductDeleted(productId);
             Apply(e);
             AddEvent(e);
         }
-        
+
         public void Confirm()
         {
             var e = new OrderConfirmed();
@@ -78,23 +79,23 @@ namespace SimpleShop.Controllers.Orders
         {
             Id = @event.OrderId;
         }
-        
+
         private void Apply(ProductAdded @event)
         {
             _state.Products.Add(@event.ProductId);
         }
-        
+
         private void Apply(ProductDeleted @event)
         {
             if (_state.Products.Contains(@event.ProductId))
                 _state.Products.Remove(@event.ProductId);
         }
-        
+
         private void Apply(OrderConfirmed @event)
         {
             _state.Confirmed = true;
         }
-        
+
         private void Apply(ClientApplied @event)
         {
             _state.ClientId = @event.ClientId;
