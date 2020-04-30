@@ -58,7 +58,6 @@ namespace SimpleShop.Controllers
             return Ok(order);
         }
 
-
         [HttpPost("confirm")]
         public async Task<IActionResult> ConfirmOrder([FromBody] ConfirmOrderRequest request)
         {
